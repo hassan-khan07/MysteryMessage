@@ -1,9 +1,8 @@
 _question_ why we choose sonner for toast notification
 _question_ what is optimistic ui approach
-_question from 10(1:9:00)_ check debouncing method flow 
+_question from 10(1:9:00)_ check debouncing method flow
 _question from 14(2:00)_ in dashboard how switch button is working as form in our project
 
- 
 _question from 4_ : why are we not using nextAuth for signup and choose cor mongoose to save user data in database?
 Because We don’t use NextAuth for signup because it’s built only for authentication, not account creation. It has a fixed and limited structure (like email/password), and doesn’t let us customize the signup logic — such as hashing passwords, adding custom fields, or verifying users. That’s why we use our own API with Mongoose for signup, and then NextAuth only for login and session handling.”
 
@@ -44,6 +43,10 @@ _from 6_ for frontend why we write on top use client and children
 _from 8 (18:50)_ why we cannot serve all messages at once
 _from 8 (24:00)_ why are we making alot of users
 _from 10(32:40)_ why we use /api for get request in page.tsx
-_from 10(58:20)_ from page.tsx(which is in signup) why we use onchange for username and not for email 
-_from 10_ why are we using react hook form
+_from 10(58:20)_ from page.tsx(which is in signup) why we use onchange for username and not for email
+
+
+_from 10_ why are we using react hook form ---->>>>>>>>  When a form has multiple fields, managing them with useState becomes messy, slow, and unoptimized because every field triggers re-renders and you manually handle validation and errors. RHF solves this by keeping the form values outside React’s state, minimizing re-renders, giving built-in validation, and letting you control the entire form through one structured system.
+
+
 _from 11(1:30)_ in verify why we need to capture username in route
