@@ -33,7 +33,7 @@ export async function DELETE(
 
   try {
     const updateResult = await UserModel.updateOne(
-      //TODO : why use only this method
+     
       { _id: _user._id },
       { $pull: { messages: { _id: messageid } } }
     );
