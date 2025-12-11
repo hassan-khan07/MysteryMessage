@@ -90,8 +90,10 @@ import { messageSchema } from "@/schemas/messageSchema";
 
 const specialChar = "||";
 
+// messageString: string → input must be a string
+// : string[] → output will be an array of strings
 const parseStringMessages = (messageString: string): string[] => {
-  return messageString.split(specialChar);
+  return messageString.split(specialChar); // split method divids a string into an array
 };
 
 const initialMessageString =
@@ -115,7 +117,7 @@ export default function SendMessage() {
     resolver: zodResolver(messageSchema),
   });
 
-  const messageContent = form.watch("content");
+  const messageContent = form.watch("content"); // watch --> READ values live as they change
 
   const handleMessageClick = (message: string) => {
     form.setValue("content", message); // Todo
@@ -155,7 +157,7 @@ export default function SendMessage() {
 
   const fetchSuggestedMessages = async () => {
     try {
-      // why we wrap it in try and catch method because complete method can throw an error and we want to handle it gracefully 
+      // why we wrap it in try and catch method because complete method can throw an error and we want to handle it gracefully
       complete("");
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -221,6 +223,13 @@ export default function SendMessage() {
             {error ? (
               <p className="text-red-500">{error.message}</p>
             ) : (
+              /* WHY you pass completion into parseStringMessages?
+                 Because completion is the raw string, like:
+                 "Hi||Yo||Send msg"
+                 You can’t do .map() on a string.
+                 Strings are not arrays.
+                You need to turn that string → array.
+              */
               parseStringMessages(completion).map((message, index) => (
                 <Button
                   key={index}
