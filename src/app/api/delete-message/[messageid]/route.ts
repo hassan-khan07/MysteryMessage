@@ -3,7 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import { User } from "next-auth";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
-import mongoose from "mongoose"; // Import mongoose
+// import mongoose from "mongoose"; // Import mongoose
 
 export async function DELETE(
   request: Request,

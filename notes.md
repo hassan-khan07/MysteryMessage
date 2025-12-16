@@ -1,4 +1,7 @@
+
+
 _question_ why we choose sonner for toast notification
+_question_ why we remove promise <user|null> in api/auth
 _question_ what is optimistic ui approach
 _question from 10(1:9:00)_ check debouncing method flow
 _question from 14(2:00)_ in dashboard how switch button is working as form in our project

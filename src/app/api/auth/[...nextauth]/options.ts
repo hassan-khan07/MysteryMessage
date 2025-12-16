@@ -10,11 +10,16 @@ export const authOptions: NextAuthOptions = {
       id: "credentials",
       name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "text" },
+        identifier: { label: "Email or Username", type: "text" },
         password: { label: "Password", type: "password" },
-      }, 
-      async authorize(credentials: any): Promise<any> {
+      },
+      async authorize(credentials) {
         await dbConnect();
+        
+        if (!credentials?.identifier || !credentials?.password) {
+          throw new Error("Please provide both email/username and password");
+        }
+
         try {
           const user = await UserModel.findOne({
             $or: [
@@ -22,23 +27,36 @@ export const authOptions: NextAuthOptions = {
               { username: credentials.identifier },
             ],
           });
+
           if (!user) {
             throw new Error("No user found with this email");
           }
+
           if (!user.isVerified) {
             throw new Error("Please verify your account before logging in");
           }
+
           const isPasswordCorrect = await bcrypt.compare(
             credentials.password,
             user.password
           );
+
           if (isPasswordCorrect) {
-            return user;
+            return {
+              id: String(user._id),
+              email: user.email,
+              username: user.username,
+              isVerified: user.isVerified,
+              isAcceptingMessages: user.isAcceptingMessages,
+            };
           } else {
             throw new Error("Incorrect password");
           }
-        } catch (err: any) {
-          throw new Error(err);
+        } catch (err) {
+          if (err instanceof Error) {
+            throw new Error(err.message);
+          }
+          throw new Error("An error occurred during authentication");
         }
       },
     }),
@@ -46,7 +64,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token._id = user._id?.toString(); // Convert ObjectId to string
+        token._id = user._id;
         token.isVerified = user.isVerified;
         token.isAcceptingMessages = user.isAcceptingMessages;
         token.username = user.username;
@@ -54,7 +72,6 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      // A session belongs to a user → so all user data goes under session.user.
       if (token) {
         session.user._id = token._id;
         session.user.isVerified = token.isVerified;

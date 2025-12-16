@@ -25,8 +25,8 @@ export async function POST(request: Request) {
     }
 
     const existingUserByEmail = await UserModel.findOne({ email });
-    let verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
-    let expiryDate = new Date();
+    const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiryDate = new Date();
     expiryDate.setHours(expiryDate.getHours() + 1); // 1 hour from now
 
     console.log("Generated verification code:", verifyCode);

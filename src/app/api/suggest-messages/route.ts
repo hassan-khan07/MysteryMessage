@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     // This is the correct method for useCompletion
     return result.toUIMessageStreamResponse(); // max token option per user
     // what is sdk format for stream response
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error in /api/suggest-messages:", err);
     return new Response(
       "What's your favorite movie?||Do you have any pets?||What's your dream job?",
@@ -44,4 +44,5 @@ export async function POST(req: Request) {
       }
     );
   }
+  
 }
