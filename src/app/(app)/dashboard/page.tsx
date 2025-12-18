@@ -4,7 +4,6 @@ import { MessageCard } from "@/components/MessageCard";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-// import { useToast } from "@/components/ui/use-toast";
 import { toast } from "sonner";
 import { Message } from "@/model/User";
 import { ApiResponse } from "@/types/ApiResponse";
@@ -21,8 +20,6 @@ function UserDashboard() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSwitchLoading, setIsSwitchLoading] = useState(false);
-
-  // const { toast } = useToast();
 
   const handleDeleteMessage = (messageId: string) => {
     setMessages(messages.filter((message) => message._id !== messageId));
@@ -41,23 +38,17 @@ function UserDashboard() {
     setIsSwitchLoading(true);
     try {
       const response = await axios.get<ApiResponse>("/api/accept-messages");
-      setValue("acceptMessages", response.data.isAcceptingMessages);
+      // ✅ CHANGED: Added ?? false to handle undefined values
+      setValue("acceptMessages", response.data.isAcceptingMessages ?? false);
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse>;
-      // toast({
-      //   title: "Error",
-      //   description:
-      //     axiosError.response?.data.message ??
-      //     "Failed to fetch message settings",
-      //   variant: "destructive",
-      // });
       toast.error(
         axiosError.response?.data.message ?? "Failed to fetch message settings"
       );
     } finally {
       setIsSwitchLoading(false);
     }
-  }, [setValue, toast]);
+  }, [setValue]); // ✅ CHANGED: Removed 'toast' from dependencies
 
   const fetchMessages = useCallback(
     async (refresh: boolean = false) => {
@@ -67,20 +58,10 @@ function UserDashboard() {
         const response = await axios.get<ApiResponse>("/api/get-messages");
         setMessages(response.data.messages || []);
         if (refresh) {
-          // toast({
-          //   title: "Refreshed Messages",
-          //   description: "Showing latest messages",
-          // });
           toast.success("Messages refreshed");
         }
       } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>;
-        // toast({
-        //   title: "Error",
-        //   description:
-        //     axiosError.response?.data.message ?? "Failed to fetch messages",
-        //   variant: "destructive",
-        // });
         toast.error(
           axiosError.response?.data.message ?? "Failed to fetch messages"
         );
@@ -89,7 +70,7 @@ function UserDashboard() {
         setIsSwitchLoading(false);
       }
     },
-    [setIsLoading, setMessages, toast]
+    [setIsLoading, setMessages] // ✅ CHANGED: Removed 'toast' from dependencies
   );
 
   // Fetch initial state from the server
@@ -97,9 +78,8 @@ function UserDashboard() {
     if (!session || !session.user) return;
 
     fetchMessages();
-
     fetchAcceptMessages();
-  }, [session, setValue, toast, fetchAcceptMessages, fetchMessages]);
+  }, [session, fetchAcceptMessages, fetchMessages]); // ✅ CHANGED: Removed 'setValue' and 'toast' from dependencies
 
   // Handle switch change
   const handleSwitchChange = async () => {
@@ -108,20 +88,9 @@ function UserDashboard() {
         acceptMessages: !acceptMessages,
       });
       setValue("acceptMessages", !acceptMessages);
-      // toast({
-      //   title: response.data.message,
-      //   variant: "default",
-      // });
       toast.success(response.data.message);
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse>;
-      // toast({
-      //   title: "Error",
-      //   description:
-      //     axiosError.response?.data.message ??
-      //     "Failed to update message settings",
-      //   variant: "destructive",
-      // });
       toast.error(
         axiosError.response?.data.message ?? "Failed to update message settings"
       );
@@ -139,10 +108,6 @@ function UserDashboard() {
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(profileUrl);
-    // toast({
-    //   title: "URL Copied!",
-    //   description: "Profile URL has been copied to clipboard.",
-    // });
     toast.success("Profile URL copied to clipboard");
   };
 
@@ -192,9 +157,9 @@ function UserDashboard() {
       </Button>
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
         {messages.length > 0 ? (
-          messages.map((message, index) => (
+          messages.map((message) => (
             <MessageCard
-              key={message._id}
+              key={String(message._id)} // ✅ CHANGED: Convert _id to string for React key
               message={message}
               onMessageDelete={handleDeleteMessage}
             />
