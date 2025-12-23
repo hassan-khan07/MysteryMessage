@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
     // ✅ CHANGED: Removed the second parameter - API key is read from environment variable
     // The google provider automatically uses GOOGLE_GENERATIVE_AI_API_KEY env variable
-    const model = google("models/gemini-2.0-flash-exp-0827");
+    const model = google("models/gemini-2.5-flash");
 
     const result = await streamText({
       model,
