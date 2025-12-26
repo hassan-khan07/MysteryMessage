@@ -43,7 +43,8 @@ export const authOptions: NextAuthOptions = {
 
           if (isPasswordCorrect) {
             return {
-              id: String(user._id),
+              _id: String(user._id),  // Changed from 'id' to '_id'
+              id: String(user._id),    // Keep 'id' for NextAuth compatibility
               email: user.email,
               username: user.username,
               isVerified: user.isVerified,
@@ -64,7 +65,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token._id = user._id;
+        token._id = user._id;  // Now this will work
         token.isVerified = user.isVerified;
         token.isAcceptingMessages = user.isAcceptingMessages;
         token.username = user.username;
