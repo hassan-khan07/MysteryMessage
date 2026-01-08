@@ -13,9 +13,11 @@ export const authOptions: NextAuthOptions = {
         identifier: { label: "Email or Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
+
       async authorize(credentials) {
+        // todo
         await dbConnect();
-        
+
         if (!credentials?.identifier || !credentials?.password) {
           throw new Error("Please provide both email/username and password");
         }
@@ -23,16 +25,18 @@ export const authOptions: NextAuthOptions = {
         try {
           const user = await UserModel.findOne({
             $or: [
-              { email: credentials.identifier },
+              { email: credentials.identifier }, // todo
               { username: credentials.identifier },
             ],
           });
-
+          // console.log("email ", credentials.identifier);
+          // console.log(" username", credentials.identifier);
           if (!user) {
             throw new Error("No user found with this email");
           }
 
           if (!user.isVerified) {
+            // todo
             throw new Error("Please verify your account before logging in");
           }
 
@@ -42,9 +46,10 @@ export const authOptions: NextAuthOptions = {
           );
 
           if (isPasswordCorrect) {
+            // ya return ja kahan rha ha aur return karta waqt sab kuch specify kyun kar rha aur sirf user kyun nhi return kar rha
             return {
-              _id: String(user._id),  // Changed from 'id' to '_id'
-              id: String(user._id),    // Keep 'id' for NextAuth compatibility
+              _id: String(user._id), // Changed from 'id' to '_id'
+              id: String(user._id), // Keep 'id' for NextAuth compatibility
               email: user.email,
               username: user.username,
               isVerified: user.isVerified,
@@ -54,6 +59,7 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Incorrect password");
           }
         } catch (err) {
+          // todo
           if (err instanceof Error) {
             throw new Error(err.message);
           }
@@ -62,15 +68,17 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
+
   callbacks: {
     async jwt({ token, user }) {
+      // where did this user come from (30:00 )
       if (user) {
-        token._id = user._id;  // Now this will work
+        token._id = user._id; // Now this will work
         token.isVerified = user.isVerified;
         token.isAcceptingMessages = user.isAcceptingMessages;
         token.username = user.username;
       }
-      return token;
+      return token; // token ka payload data ziada hoo jaye ga lakin hama database query nhi karni paray gi har session request pr
     },
     async session({ session, token }) {
       if (token) {
@@ -79,12 +87,14 @@ export const authOptions: NextAuthOptions = {
         session.user.isAcceptingMessages = token.isAcceptingMessages;
         session.user.username = token.username;
       }
-      return session;
+      return session; // next auth session base strategy pa chalta ha and what does that mean
     },
   },
+ 
   session: {
     strategy: "jwt",
   },
+
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/sign-in",

@@ -1,65 +1,3 @@
-// "use client";
-// import React from "react";
-// import { useCompletion } from "@ai-sdk/react";
-// import { Button } from "@/components/ui/button";
-
-// const specialChar = "||";
-
-// const parseStringMessages = (messages: string) => {
-//   if (!messages) return [];
-//   return messages.split(specialChar).map((m) => m.trim());
-// };
-
-// export default function SendMessage() {
-//   const {
-//     complete,
-//     completion,
-//     isLoading,
-//     error,
-//   } = useCompletion({
-//     api: "/api/suggest-messages",
-//   });
-
-//   const fetchSuggestedMessages = async () => {
-//     console.log("🚀 Calling complete()...");
-//     await complete(""); // Empty string to use default prompt
-//   };
-
-//   console.log("🔥 completion updated:", completion);
-//   console.log("⚠️ error:", error);
-//   console.log("⏳ isLoading:", isLoading);
-
-//   const messages = parseStringMessages(completion);
-
-//   return (
-//     <div className="p-6 max-w-xl mx-auto">
-//       <h2 className="text-2xl font-bold mb-4">Suggested Messages</h2>
-
-//       <Button onClick={fetchSuggestedMessages} disabled={isLoading}>
-//         {isLoading ? "Generating..." : "Suggest Messages"}
-//       </Button>
-
-//       <div className="mt-6 space-y-3">
-//         {error && (
-//           <p className="text-red-500">❌ Error: {error.message}</p>
-//         )}
-
-//         {!completion && !isLoading && (
-//           <p className="text-gray-500">Click the button to generate messages.</p>
-//         )}
-
-//         {messages.map((msg, index) => (
-//           <div
-//             key={index}
-//             className="p-3 border rounded cursor-pointer hover:bg-gray-100 transition-colors"
-//           >
-//             {msg}
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// }
 "use client";
 
 import React, { useState } from "react";
@@ -124,6 +62,7 @@ export default function SendMessage() {
   };
 
   const [isLoading, setIsLoading] = useState(false);
+  const [cooldownEnd, setCooldownEnd] = useState<Date | null>(null);
 
   const onSubmit = async (data: z.infer<typeof messageSchema>) => {
     setIsLoading(true);
@@ -158,12 +97,52 @@ export default function SendMessage() {
   const fetchSuggestedMessages = async () => {
     try {
       // why we wrap it in try and catch method because complete method can throw an error and we want to handle it gracefully
-      complete("");
+      await complete("");
     } catch (error) {
       console.error("Error fetching messages:", error);
+
+      // Handle rate limit error specifically
+      // The useCompletion hook will automatically show the error in the error state
+      // But we want to extract cooldown info from headers if available
+
+      // Type guard: Check if error is an Error instance
+      if (
+        error instanceof Error &&
+        error.message.includes("Rate limit exceeded")
+      ) {
+        // Extract minutes from error message if possible
+        const match = error.message.match(/(\d+)\s+minute/);
+        if (match) {
+          const minutes = parseInt(match[1]);
+          const resetTime = new Date(Date.now() + minutes * 60 * 1000);
+          setCooldownEnd(resetTime);
+
+          // Show toast with cooldown info
+          toast.error(
+            `Rate limit reached! Try again in ${minutes} minute${minutes !== 1 ? "s" : ""}.`,
+            {
+              duration: 5000,
+            }
+          );
+        }
+      }
       // Handle error appropriately
     }
   };
+
+  // Calculate time remaining for cooldown
+  const getTimeRemaining = () => {
+    if (!cooldownEnd) return null;
+    const now = new Date();
+    const diff = cooldownEnd.getTime() - now.getTime();
+    if (diff <= 0) {
+      setCooldownEnd(null);
+      return null;
+    }
+    return Math.ceil(diff / 60000); // minutes
+  };
+
+  const minutesLeft = getTimeRemaining();
 
   return (
     <div className="container mx-auto my-8 p-6 bg-white rounded max-w-4xl">
@@ -209,11 +188,41 @@ export default function SendMessage() {
           <Button
             onClick={fetchSuggestedMessages}
             className="my-4"
-            disabled={isSuggestLoading}
+            disabled={isSuggestLoading || minutesLeft !== null}
           >
-            Suggest Messages
+            {isSuggestLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : minutesLeft ? (
+              `Wait ${minutesLeft}min ⏰`
+            ) : (
+              "Suggest Messages"
+            )}
           </Button>
           <p>Click on any message below to select it.</p>
+
+          {/* Show cooldown warning if rate limited */}
+          {minutesLeft && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-800">
+                ⏰ AI suggestions available again in {minutesLeft} minute
+                {minutesLeft !== 1 ? "s" : ""}. This helps us keep the feature
+                free!
+              </p>
+            </div>
+          )}
+
+          {/* Show streaming indicator */}
+          {isSuggestLoading && (
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm text-blue-800 flex items-center gap-2">
+                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full animate-ping"></span>
+                AI is generating creative suggestions for you...
+              </p>
+            </div>
+          )}
         </div>
         <Card>
           <CardHeader>
@@ -226,7 +235,7 @@ export default function SendMessage() {
               /* WHY you pass completion into parseStringMessages?
                  Because completion is the raw string, like:
                  "Hi||Yo||Send msg"
-                 You can’t do .map() on a string.
+                 You can't do .map() on a string.
                  Strings are not arrays.
                 You need to turn that string → array.
               */
